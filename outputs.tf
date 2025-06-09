@@ -1,10 +1,10 @@
 output "kubernetes_cluster_name" {
-  value       = google_container_cluster.primary.name
+  value       = module.gcp_infrastructure.cluster_name
   description = "Nombre del clúster GKE"
 }
 
 output "kubernetes_cluster_host" {
-  value       = google_container_cluster.primary.endpoint
+  value       = module.gcp_infrastructure.cluster_endpoint
   sensitive   = true
   description = "Endpoint del clúster GKE"
 }
@@ -20,28 +20,28 @@ output "region" {
 }
 
 output "cluster_location" {
-  value       = google_container_cluster.primary.location
+  value       = module.gcp_infrastructure.cluster_location
   description = "Ubicación del clúster GKE"
 }
 
 output "cluster_ca_certificate" {
-  value       = google_container_cluster.primary.master_auth.0.cluster_ca_certificate
+  value       = module.gcp_infrastructure.cluster_ca_certificate
   sensitive   = true
   description = "Certificado CA del clúster"
 }
 
 output "vpc_name" {
-  value       = google_compute_network.vpc.name
+  value       = module.gcp_infrastructure.vpc_name
   description = "Nombre de la VPC"
 }
 
 output "subnet_name" {
-  value       = google_compute_subnetwork.subnet.name
+  value       = module.gcp_infrastructure.subnet_name
   description = "Nombre de la subred"
 }
 
 output "node_pool_name" {
-  value       = google_container_node_pool.primary_nodes.name
+  value       = module.gcp_infrastructure.node_pool_name
   description = "Nombre del node pool"
 }
 
@@ -56,23 +56,33 @@ output "service_discovery_service_type" {
 }
 
 output "zipkin_service_type" {
-  value       = kubernetes_service.zipkin.spec[0].type
+  value       = module.monitoring.zipkin_service_type
   description = "Tipo de servicio de Zipkin"
 }
 
 output "namespace" {
-  value       = kubernetes_namespace.ecommerce.metadata[0].name
+  value       = module.kubernetes_base.namespace_name
   description = "Namespace de Kubernetes utilizado"
 }
 
 output "config_map_name" {
-  value       = kubernetes_config_map.ecommerce_config.metadata[0].name
+  value       = module.kubernetes_base.config_map_name
   description = "Nombre del ConfigMap"
+}
+
+output "microservices_deployed" {
+  value       = module.microservices.service_names
+  description = "Lista de microservicios desplegados"
+}
+
+output "service_types" {
+  value       = module.microservices.service_types
+  description = "Tipos de servicio para cada microservicio"
 }
 
 # Información sobre cómo conectarse al clúster
 output "gcloud_connect_command" {
-  value       = "gcloud container clusters get-credentials ${google_container_cluster.primary.name} --zone ${google_container_cluster.primary.location} --project ${var.project_id}"
+  value       = "gcloud container clusters get-credentials ${module.gcp_infrastructure.cluster_name} --zone ${module.gcp_infrastructure.cluster_location} --project ${var.project_id}"
   description = "Comando para conectarse al clúster usando gcloud"
 }
 
