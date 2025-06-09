@@ -1,0 +1,49 @@
+# Archivo de ejemplo para terraform.tfvars
+# Copie este archivo a terraform.tfvars y modifique los valores según sus necesidades
+
+# Configuración del proyecto
+project_id = "ecommerce-microservices-back"
+region     = "us-central1"
+zone       = "us-central1-a"
+
+# Configuración del clúster
+cluster_name   = "ecommerce-microservices-cluster"
+gke_num_nodes  = 1
+environment    = "production"
+
+# Configuración de imágenes
+container_registry_hostname = "gcr.io"
+image_tag                  = "0.1.0"
+
+# Configuración de Kubernetes
+namespace = "ecommerce"
+
+# Ejemplo de personalización de un microservicio específico
+# microservices = {
+#   "api-gateway" = {
+#     port              = 8080
+#     target_port       = 8080
+#     replicas          = 2  # Aumentar réplicas para alta disponibilidad
+#     service_type      = "LoadBalancer"
+#     health_check_path = "/actuator/health"
+#     memory_request    = "512Mi"  # Aumentar memoria si es necesario
+#     memory_limit      = "768Mi"
+#     cpu_request       = "250m"
+#     cpu_limit         = "500m"
+#   }
+#   # ... otros servicios
+# }
+
+# Ejemplo de personalización de Zipkin
+# zipkin_config = {
+#   port              = 9411
+#   target_port       = 9411
+#   replicas          = 1
+#   service_type      = "LoadBalancer"  # Cambiar a LoadBalancer para acceso externo
+#   health_check_path = "/health"
+#   memory_request    = "512Mi"  # Aumentar memoria si es necesario
+#   memory_limit      = "768Mi"
+#   cpu_request       = "250m"
+#   cpu_limit         = "500m"
+#   image             = "openzipkin/zipkin"
+# } 
