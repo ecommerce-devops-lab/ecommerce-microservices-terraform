@@ -46,12 +46,12 @@ output "node_pool_name" {
 }
 
 output "api_gateway_service_type" {
-  value       = kubernetes_service.api_gateway.spec[0].type
+  value       = try(module.api_gateway.service_types["api-gateway"], "LoadBalancer")
   description = "Tipo de servicio del API Gateway"
 }
 
 output "service_discovery_service_type" {
-  value       = kubernetes_service.service_discovery.spec[0].type
+  value       = try(module.service_discovery.service_types["service-discovery"], "LoadBalancer")
   description = "Tipo de servicio del Service Discovery"
 }
 
@@ -71,12 +71,22 @@ output "config_map_name" {
 }
 
 output "microservices_deployed" {
-  value       = module.microservices.service_names
+  value = concat(
+    module.service_discovery.service_names,
+    module.cloud_config.service_names,
+    module.api_gateway.service_names,
+    module.business_services.service_names
+  )
   description = "Lista de microservicios desplegados"
 }
 
 output "service_types" {
-  value       = module.microservices.service_types
+  value = merge(
+    module.service_discovery.service_types,
+    module.cloud_config.service_types,
+    module.api_gateway.service_types,
+    module.business_services.service_types
+  )
   description = "Tipos de servicio para cada microservicio"
 }
 

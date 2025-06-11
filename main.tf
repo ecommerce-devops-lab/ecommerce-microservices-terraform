@@ -71,8 +71,8 @@ module "monitoring" {
   zipkin_config        = var.zipkin_config
 }
 
-# Módulo de microservicios
-module "microservices" {
+# Módulo de microservicios - Fase 1: Service Discovery
+module "service_discovery" {
   source = "./modules/microservices"
 
   namespace                   = module.kubernetes_base.namespace_name
@@ -81,6 +81,80 @@ module "microservices" {
   image_tag                   = var.image_tag
   config_map_name             = module.kubernetes_base.config_map_name
   cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
-  microservices               = var.microservices
-  dependencies                = [module.monitoring.zipkin_service_name, module.kubernetes_base.config_map_name]
+  microservices               = {
+    "service-discovery" = var.microservices["service-discovery"]
+  }
+  dependencies                = [module.monitoring.zipkin_service_name]
+}
+
+# Esperar a que Service Discovery esté listo
+resource "time_sleep" "wait_for_service_discovery" {
+  depends_on = [module.service_discovery]
+  create_duration = "120s"
+}
+
+# Módulo de microservicios - Fase 2: Cloud Config
+module "cloud_config" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "cloud-config" = var.microservices["cloud-config"]
+  }
+  dependencies                = [time_sleep.wait_for_service_discovery]
+}
+
+# Esperar a que Cloud Config esté listo
+resource "time_sleep" "wait_for_cloud_config" {
+  depends_on = [module.cloud_config]
+  create_duration = "90s"
+}
+
+# Módulo de microservicios - Fase 3: API Gateway
+module "api_gateway" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "api-gateway" = var.microservices["api-gateway"]
+  }
+  dependencies                = [time_sleep.wait_for_cloud_config]
+}
+
+# Esperar a que API Gateway esté listo
+resource "time_sleep" "wait_for_api_gateway" {
+  depends_on = [module.api_gateway]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 4: Resto de microservicios
+module "business_services" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "user-service"      = var.microservices["user-service"]
+    "product-service"   = var.microservices["product-service"]
+    "order-service"     = var.microservices["order-service"]
+    "payment-service"   = var.microservices["payment-service"]
+    "shipping-service"  = var.microservices["shipping-service"]
+    "favourite-service" = var.microservices["favourite-service"]
+    "proxy-client"      = var.microservices["proxy-client"]
+  }
+  dependencies                = [time_sleep.wait_for_api_gateway]
 } 

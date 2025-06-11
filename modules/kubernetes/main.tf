@@ -34,6 +34,64 @@ resource "kubernetes_config_map" "ecommerce_config" {
       }
     })
 
+    # Configuración específica para Service Discovery (no se registra a sí mismo)
+    SPRING_APPLICATION_JSON_EUREKA_SERVER = jsonencode({
+      server = {
+        port = 8761
+      }
+      spring = {
+        application = {
+          name = "SERVICE-DISCOVERY"
+        }
+      }
+      eureka = {
+        client = {
+          register-with-eureka = false
+          fetch-registry = false
+        }
+        server = {
+          enable-self-preservation = false
+          eviction-interval-timer-in-ms = 15000
+          response-cache-auto-expiration-in-seconds = 30
+        }
+        instance = {
+          lease-renewal-interval-in-seconds = 30
+          lease-expiration-duration-in-seconds = 90
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        endpoint = {
+          health = {
+            probes = {
+              enabled = true
+            }
+            show-details = "always"
+          }
+        }
+        health = {
+          livenessstate = {
+            enabled = true
+          }
+          readinessstate = {
+            enabled = true
+          }
+        }
+      }
+      logging = {
+        level = {
+          "com.netflix.eureka" = "WARN"
+          "com.netflix.discovery" = "WARN"
+        }
+      }
+    })
+
     # Cloud Config
     SPRING_CLOUD_CONFIG_URI = "http://cloud-config:9296"
     SPRING_ZIPKIN_BASE_URL = "http://zipkin:9411/"

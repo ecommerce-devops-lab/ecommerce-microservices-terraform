@@ -53,6 +53,20 @@ resource "kubernetes_deployment" "microservice" {
             }
           }
 
+          # Configuración específica para Service Discovery
+          dynamic "env" {
+            for_each = each.key == "service-discovery" ? [1] : []
+            content {
+              name  = "SPRING_APPLICATION_JSON"
+              value_from {
+                config_map_key_ref {
+                  name = var.config_map_name
+                  key  = "SPRING_APPLICATION_JSON_EUREKA_SERVER"
+                }
+              }
+            }
+          }
+
           # Configuración específica para cloud-config
           dynamic "volume_mount" {
             for_each = each.key == "cloud-config" ? [1] : []
@@ -62,26 +76,38 @@ resource "kubernetes_deployment" "microservice" {
             }
           }
 
-          liveness_probe {
+          # Startup probe - especialmente importante para service-discovery
+          startup_probe {
             http_get {
-              path = each.value.health_check_path
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : each.value.health_check_path
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 120 : (each.key == "cloud-config" ? 90 : 180)
+            initial_delay_seconds = each.key == "service-discovery" ? 30 : 20
+            period_seconds        = 10
+            timeout_seconds       = 15
+            failure_threshold     = each.key == "service-discovery" ? 30 : 20
+          }
+
+          liveness_probe {
+            http_get {
+              path = each.key == "service-discovery" ? "/actuator/health/liveness" : each.value.health_check_path
+              port = each.value.target_port
+            }
+            initial_delay_seconds = each.key == "service-discovery" ? 180 : (each.key == "cloud-config" ? 90 : 180)
             period_seconds        = 30
-            timeout_seconds       = 10
-            failure_threshold     = 5
+            timeout_seconds       = each.key == "service-discovery" ? 15 : 10
+            failure_threshold     = each.key == "service-discovery" ? 6 : 5
           }
 
           readiness_probe {
             http_get {
-              path = each.value.health_check_path
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : each.value.health_check_path
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 60 : (each.key == "cloud-config" ? 45 : 120)
+            initial_delay_seconds = each.key == "service-discovery" ? 90 : (each.key == "cloud-config" ? 45 : 120)
             period_seconds        = 15
-            timeout_seconds       = 8
-            failure_threshold     = 3
+            timeout_seconds       = each.key == "service-discovery" ? 12 : 8
+            failure_threshold     = each.key == "service-discovery" ? 5 : 3
           }
         }
 
