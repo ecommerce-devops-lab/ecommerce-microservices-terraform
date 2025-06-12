@@ -67,6 +67,120 @@ resource "kubernetes_deployment" "microservice" {
             }
           }
 
+          # Configuración de Eureka y Spring Cloud Config usando SPRING_APPLICATION_JSON (mayor prioridad)
+          dynamic "env" {
+            for_each = contains(["cloud-config", "proxy-client", "service-discovery"], each.key) ? [] : [1]
+            content {
+              name  = "SPRING_APPLICATION_JSON"
+              value = jsonencode({
+                server = {
+                  port = each.value.target_port
+                }
+                eureka = {
+                  client = {
+                    enabled = true
+                    register-with-eureka = true
+                    fetch-registry = true
+                    service-url = {
+                      defaultZone = "http://service-discovery:8761/eureka/"
+                    }
+                  }
+                  instance = {
+                    prefer-ip-address = false
+                    hostname = each.key
+                  }
+                }
+                spring = {
+                  cloud = {
+                    config = {
+                      uri = "http://cloud-config:9296"
+                      enabled = true
+                      fail-fast = false
+                    }
+                  }
+                  config = {
+                    import = "configserver:http://cloud-config:9296"
+                  }
+                }
+              })
+            }
+          }
+
+          # Variables adicionales para Spring Cloud Config (máxima prioridad)
+          dynamic "env" {
+            for_each = contains(["cloud-config", "proxy-client", "service-discovery"], each.key) ? [] : [1]
+            content {
+              name  = "SPRING_CONFIG_IMPORT"
+              value = "configserver:http://cloud-config:9296"
+            }
+          }
+
+          # Variables de entorno de Eureka para microservicios (como respaldo)
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE"
+              value = "http://service-discovery:8761/eureka/"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_CLIENT_ENABLED"
+              value = "true"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_CLIENT_REGISTER_WITH_EUREKA"
+              value = "true"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_CLIENT_FETCH_REGISTRY"
+              value = "true"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_INSTANCE_PREFER_IP_ADDRESS"
+              value = "false"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "EUREKA_INSTANCE_HOSTNAME"
+              value = each.key
+            }
+          }
+
+          # Variables de entorno de Spring Cloud Config para microservicios
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "SPRING_CLOUD_CONFIG_URI"
+              value = "http://cloud-config:9296"
+            }
+          }
+
+          dynamic "env" {
+            for_each = contains(["service-discovery", "cloud-config", "proxy-client"], each.key) ? [] : [1]
+            content {
+              name  = "SPRING_CLOUD_CONFIG_ENABLED"
+              value = "true"
+            }
+          }
+
           # Configuración específica para cloud-config
           dynamic "volume_mount" {
             for_each = each.key == "cloud-config" ? [1] : []
@@ -79,35 +193,35 @@ resource "kubernetes_deployment" "microservice" {
           # Startup probe - especialmente importante para service-discovery
           startup_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/readiness" : each.value.health_check_path
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 30 : 20
+            initial_delay_seconds = each.key == "service-discovery" ? 30 : 45
             period_seconds        = 10
             timeout_seconds       = 15
-            failure_threshold     = each.key == "service-discovery" ? 30 : 20
+            failure_threshold     = each.key == "service-discovery" ? 30 : 40
           }
 
           liveness_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/liveness" : each.value.health_check_path
+              path = each.key == "service-discovery" ? "/actuator/health/liveness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 180 : (each.key == "cloud-config" ? 90 : 180)
+            initial_delay_seconds = each.key == "service-discovery" ? 180 : (each.key == "cloud-config" ? 120 : 240)
             period_seconds        = 30
-            timeout_seconds       = each.key == "service-discovery" ? 15 : 10
-            failure_threshold     = each.key == "service-discovery" ? 6 : 5
+            timeout_seconds       = each.key == "service-discovery" ? 15 : 15
+            failure_threshold     = each.key == "service-discovery" ? 6 : 8
           }
 
           readiness_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/readiness" : each.value.health_check_path
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 90 : (each.key == "cloud-config" ? 45 : 120)
+            initial_delay_seconds = each.key == "service-discovery" ? 90 : (each.key == "cloud-config" ? 60 : 180)
             period_seconds        = 15
-            timeout_seconds       = each.key == "service-discovery" ? 12 : 8
-            failure_threshold     = each.key == "service-discovery" ? 5 : 3
+            timeout_seconds       = each.key == "service-discovery" ? 12 : 12
+            failure_threshold     = each.key == "service-discovery" ? 5 : 6
           }
         }
 

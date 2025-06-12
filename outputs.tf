@@ -75,7 +75,13 @@ output "microservices_deployed" {
     module.service_discovery.service_names,
     module.cloud_config.service_names,
     module.api_gateway.service_names,
-    module.business_services.service_names
+    module.user_service.service_names,
+    module.product_service.service_names,
+    module.order_service.service_names,
+    module.payment_service.service_names,
+    module.shipping_service.service_names,
+    module.favourite_service.service_names,
+    module.proxy_client.service_names
   )
   description = "Lista de microservicios desplegados"
 }
@@ -85,7 +91,13 @@ output "service_types" {
     module.service_discovery.service_types,
     module.cloud_config.service_types,
     module.api_gateway.service_types,
-    module.business_services.service_types
+    module.user_service.service_types,
+    module.product_service.service_types,
+    module.order_service.service_types,
+    module.payment_service.service_types,
+    module.shipping_service.service_types,
+    module.favourite_service.service_types,
+    module.proxy_client.service_types
   )
   description = "Tipos de servicio para cada microservicio"
 }

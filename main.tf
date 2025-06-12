@@ -137,8 +137,8 @@ resource "time_sleep" "wait_for_api_gateway" {
   create_duration = "60s"
 }
 
-# Módulo de microservicios - Fase 4: Resto de microservicios
-module "business_services" {
+# Módulo de microservicios - Fase 4: User Service
+module "user_service" {
   source = "./modules/microservices"
 
   namespace                   = module.kubernetes_base.namespace_name
@@ -148,13 +148,139 @@ module "business_services" {
   config_map_name             = module.kubernetes_base.config_map_name
   cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
   microservices               = {
-    "user-service"      = var.microservices["user-service"]
-    "product-service"   = var.microservices["product-service"]
-    "order-service"     = var.microservices["order-service"]
-    "payment-service"   = var.microservices["payment-service"]
-    "shipping-service"  = var.microservices["shipping-service"]
-    "favourite-service" = var.microservices["favourite-service"]
-    "proxy-client"      = var.microservices["proxy-client"]
+    "user-service" = var.microservices["user-service"]
   }
   dependencies                = [time_sleep.wait_for_api_gateway]
+}
+
+# Esperar a que User Service esté listo
+resource "time_sleep" "wait_for_user_service" {
+  depends_on = [module.user_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 5: Product Service
+module "product_service" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "product-service" = var.microservices["product-service"]
+  }
+  dependencies                = [time_sleep.wait_for_user_service]
+}
+
+# Esperar a que Product Service esté listo
+resource "time_sleep" "wait_for_product_service" {
+  depends_on = [module.product_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 6: Order Service
+module "order_service" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "order-service" = var.microservices["order-service"]
+  }
+  dependencies                = [time_sleep.wait_for_product_service]
+}
+
+# Esperar a que Order Service esté listo
+resource "time_sleep" "wait_for_order_service" {
+  depends_on = [module.order_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 7: Payment Service
+module "payment_service" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "payment-service" = var.microservices["payment-service"]
+  }
+  dependencies                = [time_sleep.wait_for_order_service]
+}
+
+# Esperar a que Payment Service esté listo
+resource "time_sleep" "wait_for_payment_service" {
+  depends_on = [module.payment_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 8: Shipping Service
+module "shipping_service" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "shipping-service" = var.microservices["shipping-service"]
+  }
+  dependencies                = [time_sleep.wait_for_payment_service]
+}
+
+# Esperar a que Shipping Service esté listo
+resource "time_sleep" "wait_for_shipping_service" {
+  depends_on = [module.shipping_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 9: Favourite Service
+module "favourite_service" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "favourite-service" = var.microservices["favourite-service"]
+  }
+  dependencies                = [time_sleep.wait_for_shipping_service]
+}
+
+# Esperar a que Favourite Service esté listo
+resource "time_sleep" "wait_for_favourite_service" {
+  depends_on = [module.favourite_service]
+  create_duration = "60s"
+}
+
+# Módulo de microservicios - Fase 10: Proxy Client (último)
+module "proxy_client" {
+  source = "./modules/microservices"
+
+  namespace                   = module.kubernetes_base.namespace_name
+  project_id                  = var.project_id
+  container_registry_hostname = var.container_registry_hostname
+  image_tag                   = var.image_tag
+  config_map_name             = module.kubernetes_base.config_map_name
+  cloud_config_map_name       = module.kubernetes_base.cloud_config_map_name
+  microservices               = {
+    "proxy-client" = var.microservices["proxy-client"]
+  }
+  dependencies                = [time_sleep.wait_for_favourite_service]
 } 

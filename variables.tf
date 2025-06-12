@@ -75,8 +75,8 @@ variable "microservices" {
       health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "cloud-config" = {
       port              = 9296
@@ -86,8 +86,8 @@ variable "microservices" {
       health_check_path = "/actuator/health"
       memory_request    = "512Mi"
       memory_limit      = "768Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "api-gateway" = {
       port              = 8080
@@ -97,74 +97,74 @@ variable "microservices" {
       health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "user-service" = {
       port              = 8700
       target_port       = 8700
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/user-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "product-service" = {
       port              = 8500
       target_port       = 8500
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/product-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "order-service" = {
       port              = 8300
       target_port       = 8300
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/order-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "payment-service" = {
       port              = 8400
       target_port       = 8400
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/payment-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "512Mi"
       memory_limit      = "768Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "shipping-service" = {
       port              = 8600
       target_port       = 8600
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/shipping-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "favourite-service" = {
       port              = 8800
       target_port       = 8800
       replicas          = 1
       service_type      = "ClusterIP"
-      health_check_path = "/favourite-service/actuator/health"
+      health_check_path = "/actuator/health"
       memory_request    = "384Mi"
       memory_limit      = "512Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
     "proxy-client" = {
       port              = 8900
@@ -174,8 +174,8 @@ variable "microservices" {
       health_check_path = "/actuator/health"
       memory_request    = "256Mi"
       memory_limit      = "384Mi"
-      cpu_request       = "250m"
-      cpu_limit         = "500m"
+      cpu_request       = "125m"
+      cpu_limit         = "250m"
     }
   }
 }
@@ -203,8 +203,8 @@ variable "zipkin_config" {
     health_check_path = "/health"
     memory_request    = "256Mi"
     memory_limit      = "384Mi"
-    cpu_request       = "250m"
-    cpu_limit         = "500m"
+    cpu_request       = "125m"
+    cpu_limit         = "250m"
     image             = "openzipkin/zipkin"
   }
 } 

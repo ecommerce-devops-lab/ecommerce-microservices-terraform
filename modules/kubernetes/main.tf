@@ -18,23 +18,37 @@ resource "kubernetes_config_map" "ecommerce_config" {
     SPRING_PROFILES_ACTIVE = "native"
     JAVA_OPTS = "-Xms256m -Xmx512m"
 
-    # Configuración JSON que sobrescribe todo
-    SPRING_APPLICATION_JSON = jsonencode({
-      eureka = {
-        client = {
-          serviceUrl = {
-            defaultZone = "http://service-discovery:8761/eureka/"
-          }
-          register-with-eureka = true
-          fetch-registry = true
-        }
-        instance = {
-          prefer-ip-address = true
-        }
-      }
-    })
-
-    # Configuración específica para Service Discovery (no se registra a sí mismo)
+    # Configuración correcta de Cloud Config (NO localhost)
+    SPRING_CLOUD_CONFIG_URI = "http://cloud-config:9296"
+    SPRING_CLOUD_CONFIG_FAIL_FAST = "false"
+    
+    # Configuración base H2 para todos los microservicios de negocio
+    SPRING_DATASOURCE_URL = "jdbc:h2:mem:testdb"
+    SPRING_DATASOURCE_DRIVER_CLASS_NAME = "org.h2.Driver"
+    SPRING_DATASOURCE_USERNAME = "sa"
+    SPRING_DATASOURCE_PASSWORD = ""
+    SPRING_H2_CONSOLE_ENABLED = "true"
+    SPRING_JPA_HIBERNATE_DDL_AUTO = "create-drop"
+    SPRING_JPA_SHOW_SQL = "false"
+    SPRING_JPA_DATABASE_PLATFORM = "org.hibernate.dialect.H2Dialect"
+    
+    # Configuración Eureka para microservicios cliente
+    EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE = "http://service-discovery:8761/eureka/"
+    EUREKA_CLIENT_REGISTER_WITH_EUREKA = "true"
+    EUREKA_CLIENT_FETCH_REGISTRY = "true"
+    EUREKA_INSTANCE_PREFER_IP_ADDRESS = "true"
+    
+    # Management endpoints
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE = "health,info,metrics"
+    MANAGEMENT_HEALTH_DB_ENABLED = "false"
+    MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED = "true"
+    MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED = "true"
+    MANAGEMENT_HEALTH_READINESSSTATE_ENABLED = "true"
+    
+    # Zipkin
+    SPRING_ZIPKIN_BASE_URL = "http://zipkin:9411/"
+    
+    # Configuración específica para Service Discovery (Eureka Server)
     SPRING_APPLICATION_JSON_EUREKA_SERVER = jsonencode({
       server = {
         port = 8761
@@ -91,10 +105,6 @@ resource "kubernetes_config_map" "ecommerce_config" {
         }
       }
     })
-
-    # Cloud Config
-    SPRING_CLOUD_CONFIG_URI = "http://cloud-config:9296"
-    SPRING_ZIPKIN_BASE_URL = "http://zipkin:9411/"
 
     # URLs de servicios para la comunicación interna
     USER_SERVICE_HOST = "http://user-service:8700"
@@ -158,22 +168,51 @@ resource "kubernetes_config_map" "cloud_config_files" {
         port = 8700
       }
       spring = {
+        application = {
+          name = "USER-SERVICE"
+        }
         datasource = {
-          url = "jdbc:postgresql://localhost:5432/userdb"
-          username = "admin"
-          password = "admin"
+          url = "jdbc:h2:mem:userdb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
         }
         jpa = {
           hibernate = {
-            "ddl-auto" = "update"
+            "ddl-auto" = "create-drop"
           }
-          "show-sql" = true
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
         }
       }
       eureka = {
         client = {
           "service-url" = {
             defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
           }
         }
       }
@@ -184,22 +223,51 @@ resource "kubernetes_config_map" "cloud_config_files" {
         port = 8500
       }
       spring = {
+        application = {
+          name = "PRODUCT-SERVICE"
+        }
         datasource = {
-          url = "jdbc:postgresql://localhost:5432/productdb"
-          username = "admin"
-          password = "admin"
+          url = "jdbc:h2:mem:productdb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
         }
         jpa = {
           hibernate = {
-            "ddl-auto" = "update"
+            "ddl-auto" = "create-drop"
           }
-          "show-sql" = true
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
         }
       }
       eureka = {
         client = {
           "service-url" = {
             defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
           }
         }
       }
@@ -210,22 +278,216 @@ resource "kubernetes_config_map" "cloud_config_files" {
         port = 8300
       }
       spring = {
+        application = {
+          name = "ORDER-SERVICE"
+        }
         datasource = {
-          url = "jdbc:postgresql://localhost:5432/orderdb"
-          username = "admin"
-          password = "admin"
+          url = "jdbc:h2:mem:orderdb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
         }
         jpa = {
           hibernate = {
-            "ddl-auto" = "update"
+            "ddl-auto" = "create-drop"
           }
-          "show-sql" = true
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
         }
       }
       eureka = {
         client = {
           "service-url" = {
             defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
+          }
+        }
+      }
+    })
+
+    "payment-service-dev.yml" = yamlencode({
+      server = {
+        port = 8400
+      }
+      spring = {
+        application = {
+          name = "PAYMENT-SERVICE"
+        }
+        datasource = {
+          url = "jdbc:h2:mem:paymentdb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
+        }
+        jpa = {
+          hibernate = {
+            "ddl-auto" = "create-drop"
+          }
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
+        }
+      }
+      eureka = {
+        client = {
+          "service-url" = {
+            defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
+          }
+        }
+      }
+    })
+
+    "shipping-service-dev.yml" = yamlencode({
+      server = {
+        port = 8600
+      }
+      spring = {
+        application = {
+          name = "SHIPPING-SERVICE"
+        }
+        datasource = {
+          url = "jdbc:h2:mem:shippingdb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
+        }
+        jpa = {
+          hibernate = {
+            "ddl-auto" = "create-drop"
+          }
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
+        }
+      }
+      eureka = {
+        client = {
+          "service-url" = {
+            defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
+          }
+        }
+      }
+    })
+
+    "favourite-service-dev.yml" = yamlencode({
+      server = {
+        port = 8800
+      }
+      spring = {
+        application = {
+          name = "FAVOURITE-SERVICE"
+        }
+        datasource = {
+          url = "jdbc:h2:mem:favouritedb"
+          driver-class-name = "org.h2.Driver"
+          username = "sa"
+          password = ""
+        }
+        h2 = {
+          console = {
+            enabled = true
+          }
+        }
+        jpa = {
+          hibernate = {
+            "ddl-auto" = "create-drop"
+          }
+          "show-sql" = false
+          database-platform = "org.hibernate.dialect.H2Dialect"
+        }
+      }
+      eureka = {
+        client = {
+          "service-url" = {
+            defaultZone = "http://service-discovery:8761/eureka/"
+          }
+          "register-with-eureka" = true
+          "fetch-registry" = true
+        }
+        instance = {
+          "prefer-ip-address" = true
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        health = {
+          db = {
+            enabled = false
           }
         }
       }
