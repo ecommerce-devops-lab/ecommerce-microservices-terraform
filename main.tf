@@ -52,6 +52,10 @@ module "gcp_infrastructure" {
   zone           = var.zone
   cluster_name   = var.cluster_name
   gke_num_nodes  = var.gke_num_nodes
+  service_url    = var.service_url
+  db_host        = var.db_host
+  db_name        = var.db_name
+  api_key        = var.api_key
 }
 
 # Módulo de configuración base de Kubernetes

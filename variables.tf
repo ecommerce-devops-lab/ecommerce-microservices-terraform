@@ -1,31 +1,26 @@
 variable "project_id" {
-  description = "El ID del proyecto de Google Cloud"
+  description = "The project ID to deploy to"
   type        = string
-  default     = "ecommerce-microservices-back"
 }
 
 variable "region" {
-  description = "La región de Google Cloud donde se desplegará la infraestructura"
+  description = "The region to deploy to"
   type        = string
-  default     = "us-central1"
 }
 
 variable "zone" {
-  description = "La zona específica dentro de la región"
+  description = "The zone to deploy to"
   type        = string
-  default     = "us-central1-a"
 }
 
 variable "cluster_name" {
-  description = "El nombre del clúster GKE"
+  description = "The name of the GKE cluster"
   type        = string
-  default     = "ecommerce-microservices-cluster"
 }
 
 variable "gke_num_nodes" {
-  description = "Número de nodos en el clúster GKE"
+  description = "Number of nodes in the GKE cluster"
   type        = number
-  default     = 2
 }
 
 variable "container_registry_hostname" {
@@ -207,4 +202,25 @@ variable "zipkin_config" {
     cpu_limit         = "250m"
     image             = "openzipkin/zipkin"
   }
+}
+
+variable "service_url" {
+  description = "The URL of the service to be used in the API endpoints"
+  type        = string
+}
+
+variable "db_host" {
+  description = "Database host"
+  type        = string
+}
+
+variable "db_name" {
+  description = "Database name"
+  type        = string
+}
+
+variable "api_key" {
+  description = "API key for service authentication"
+  type        = string
+  sensitive   = true
 } 
