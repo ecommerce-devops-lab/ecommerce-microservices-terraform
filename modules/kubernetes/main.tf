@@ -106,6 +106,83 @@ resource "kubernetes_config_map" "ecommerce_config" {
       }
     })
 
+    # Configuración específica para Proxy Client
+    SPRING_APPLICATION_JSON_PROXY_CLIENT = jsonencode({
+      server = {
+        port = 8900
+      }
+      spring = {
+        application = {
+          name = "PROXY-CLIENT"
+        }
+        cloud = {
+          config = {
+            uri = "http://cloud-config:9296"
+            enabled = true
+            fail-fast = false
+          }
+        }
+      }
+      eureka = {
+        client = {
+          enabled = true
+          register-with-eureka = true
+          fetch-registry = true
+          service-url = {
+            defaultZone = "http://service-discovery:8761/eureka/"
+          }
+        }
+        instance = {
+          prefer-ip-address = false
+          hostname = "proxy-client"
+        }
+      }
+      management = {
+        endpoints = {
+          web = {
+            exposure = {
+              include = "health,info,metrics"
+            }
+          }
+        }
+        endpoint = {
+          health = {
+            probes = {
+              enabled = true
+            }
+            show-details = "always"
+          }
+        }
+        health = {
+          livenessstate = {
+            enabled = true
+          }
+          readinessstate = {
+            enabled = true
+          }
+        }
+      }
+      # URLs de los microservicios
+      user-service = {
+        url = "http://user-service:8700"
+      }
+      product-service = {
+        url = "http://product-service:8500"
+      }
+      order-service = {
+        url = "http://order-service:8300"
+      }
+      payment-service = {
+        url = "http://payment-service:8400"
+      }
+      shipping-service = {
+        url = "http://shipping-service:8600"
+      }
+      favourite-service = {
+        url = "http://favourite-service:8800"
+      }
+    })
+
     # URLs de servicios para la comunicación interna
     USER_SERVICE_HOST = "http://user-service:8700"
     PRODUCT_SERVICE_HOST = "http://product-service:8500"

@@ -67,6 +67,20 @@ resource "kubernetes_deployment" "microservice" {
             }
           }
 
+          # Configuración específica para Proxy Client
+          dynamic "env" {
+            for_each = each.key == "proxy-client" ? [1] : []
+            content {
+              name  = "SPRING_APPLICATION_JSON"
+              value_from {
+                config_map_key_ref {
+                  name = var.config_map_name
+                  key  = "SPRING_APPLICATION_JSON_PROXY_CLIENT"
+                }
+              }
+            }
+          }
+
           # Configuración de Eureka y Spring Cloud Config usando SPRING_APPLICATION_JSON (mayor prioridad)
           dynamic "env" {
             for_each = contains(["cloud-config", "proxy-client", "service-discovery"], each.key) ? [] : [1]
@@ -193,21 +207,21 @@ resource "kubernetes_deployment" "microservice" {
           # Startup probe - especialmente importante para service-discovery
           startup_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway", "proxy-client"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 30 : 45
+            initial_delay_seconds = each.key == "service-discovery" ? 30 : (each.key == "proxy-client" ? 60 : 45)
             period_seconds        = 10
             timeout_seconds       = 15
-            failure_threshold     = each.key == "service-discovery" ? 30 : 40
+            failure_threshold     = each.key == "service-discovery" ? 30 : (each.key == "proxy-client" ? 30 : 40)
           }
 
           liveness_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/liveness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
+              path = each.key == "service-discovery" ? "/actuator/health/liveness" : (contains(["cloud-config", "api-gateway", "proxy-client"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 180 : (each.key == "cloud-config" ? 120 : 240)
+            initial_delay_seconds = each.key == "service-discovery" ? 180 : (each.key == "cloud-config" ? 120 : (each.key == "proxy-client" ? 180 : 240))
             period_seconds        = 30
             timeout_seconds       = each.key == "service-discovery" ? 15 : 15
             failure_threshold     = each.key == "service-discovery" ? 6 : 8
@@ -215,10 +229,10 @@ resource "kubernetes_deployment" "microservice" {
 
           readiness_probe {
             http_get {
-              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
+              path = each.key == "service-discovery" ? "/actuator/health/readiness" : (contains(["cloud-config", "api-gateway", "proxy-client"], each.key) ? each.value.health_check_path : "/${each.key}${each.value.health_check_path}")
               port = each.value.target_port
             }
-            initial_delay_seconds = each.key == "service-discovery" ? 90 : (each.key == "cloud-config" ? 60 : 180)
+            initial_delay_seconds = each.key == "service-discovery" ? 90 : (each.key == "cloud-config" ? 60 : (each.key == "proxy-client" ? 120 : 180))
             period_seconds        = 15
             timeout_seconds       = each.key == "service-discovery" ? 12 : 12
             failure_threshold     = each.key == "service-discovery" ? 5 : 6

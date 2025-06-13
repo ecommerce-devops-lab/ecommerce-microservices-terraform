@@ -82,7 +82,7 @@ variable "microservices" {
       port              = 9296
       target_port       = 9296
       replicas          = 1
-      service_type      = "ClusterIP"
+      service_type      = "LoadBalancer"
       health_check_path = "/actuator/health"
       memory_request    = "512Mi"
       memory_limit      = "768Mi"
@@ -170,7 +170,7 @@ variable "microservices" {
       port              = 8900
       target_port       = 8900
       replicas          = 1
-      service_type      = "ClusterIP"
+      service_type      = "LoadBalancer"
       health_check_path = "/actuator/health"
       memory_request    = "256Mi"
       memory_limit      = "384Mi"
