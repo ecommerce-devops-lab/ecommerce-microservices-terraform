@@ -84,13 +84,27 @@ resource "google_container_cluster" "primary" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
+  # Configuración de mantenimiento
+  maintenance_policy {
+    recurring_window {
+      start_time = "2024-01-01T00:00:00Z"
+      end_time   = "2024-01-01T04:00:00Z"
+      recurrence = "FREQ=WEEKLY;BYDAY=SA,SU"
+    }
+  }
+
+  # Configuración de release channel
+  release_channel {
+    channel = "REGULAR"
+  }
+
   depends_on = [
     google_project_service.container,
     google_project_service.compute,
   ]
 }
 
-# Crear node pool separado
+# Crear node pool separado con autoscaling
 resource "google_container_node_pool" "primary_nodes" {
   name       = "ecommerce-nodes"
   location   = var.zone
@@ -130,17 +144,56 @@ resource "google_container_node_pool" "primary_nodes" {
     }
   }
 
+  # Configuración de autoscaling mejorada
   autoscaling {
     min_node_count = 1
-    max_node_count = 2
+    max_node_count = 3
+    location_policy = "BALANCED"
   }
 
+  # Configuración de gestión
   management {
     auto_repair  = true
     auto_upgrade = true
   }
 
+  # Configuración de actualización
+  upgrade_settings {
+    max_surge       = 1
+    max_unavailable = 0
+  }
+
   depends_on = [google_container_cluster.primary]
+}
+
+# Configuración de Cloud Monitoring para el clúster
+resource "google_monitoring_uptime_check_config" "cluster_health" {
+  display_name = "GKE Cluster Health Check"
+  timeout      = "10s"
+
+  http_check {
+    port = 443
+    use_ssl = true
+    path = "/healthz"
+  }
+
+  monitored_resource {
+    type = "uptime_url"
+    labels = {
+      host = google_container_cluster.primary.endpoint
+    }
+  }
+}
+
+# Configuración de Cloud Logging
+resource "google_logging_metric" "cluster_errors" {
+  name        = "gke-cluster-errors"
+  description = "Log de errores del clúster GKE"
+  filter      = "resource.type=\"k8s_cluster\" AND severity>=ERROR"
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
 }
 
 # Circuit Breaker Pattern Implementation
